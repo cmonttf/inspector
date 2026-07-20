@@ -66,31 +66,50 @@ def debe_excluirse(archivo: Path) -> bool:
     - Librería de terceros
     - Archivo minificado/compilado
     - Asset generado automáticamente
+    - Tests o archivos de prueba
     """
     ruta_relativa = str(archivo).lower()
+    nombre = archivo.name.lower()
     
     # Patrones de exclusión: archivos minificados y librerías de terceros
-    patrones_excluir = {
-        # Minificados
+    patrones_excluir = [
+        # Minificados y compilados
         ".min.js", ".min.css", ".min.map", ".min.html",
-        # Vendor y librerías
+        ".pack.js", ".pack.css", ".full.js",
+        
+        # Vendor y librerías principales
         "node_modules/", "vendor/", "/vendor/", "bower_components/",
         "jquery-easyui/", "jquery-ui/", "bootstrap/", "semantic/",
         "assets/jquery", "assets/bootstrap", "assets/semantic",
         "lib/jquery", "lib/bootstrap", "lib/semantic",
+        
+        # Librerías específicas versionadas
+        "media_1/",  # DataTables src
+        "datatables",
+        "flexigrid",
+        "jsdatepick",
+        "kendo",
+        
+        # Tests y Specs
+        "/test/", "/tests/", "/spec/", "/specs/",
+        "/testing/", "/unit_testing/",
+        "test_", "tests_",
+        ".test.js", ".spec.js", ".test.css", ".spec.css",
+        
         # Compilados/Generados
         "/dist/", "/build/", "/out/", "/.next/", "/.nuxt/",
         "/coverage/", "/.coverage",
+        
         # Maps y sourcemaps
         ".map.js", ".map.css",
-    }
+    ]
     
     for patron in patrones_excluir:
         if patron in ruta_relativa:
             return True
     
-    # Excluir archivos de mapas (source maps)
-    if archivo.name.endswith(".map"):
+    # Excluir archivos de mapas
+    if nombre.endswith(".map"):
         return True
     
     return False
