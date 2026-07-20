@@ -1,19 +1,19 @@
 # Inspector
 
-Inspector es una herramienta de línea de comandos en Python orientada a analizar proyectos de software, especialmente proyectos PHP legacy o mixtos. El objetivo es entregar, en una sola ejecución, un resumen útil del proyecto: conteo de archivos por extensión, detección de framework PHP, identificación de Kendo, dependencias externas del servidor y uso de funciones OCI obsoletas.[1][2]
+Inspector es una herramienta de línea de comandos en Python orientada a analizar proyectos de software, especialmente proyectos PHP legacy o mixtos. El objetivo es entregar, en una sola ejecución, un resumen útil del proyecto: conteo de archivos por extensión, detección de framework PHP, identificación de Kendo, dependencias externas del servidor y uso de funciones OCI obsoletas.
 
 ## Objetivo
 
-El proyecto está pensado para inspeccionar código fuente de forma rápida sin depender de la ejecución del sistema objetivo. La herramienta usa patrones de archivos, estructura del proyecto y análisis estático de contenido para inferir tecnologías y riesgos comunes; este tipo de fingerprinting tecnológico es una práctica habitual para clasificar frameworks y componentes de una aplicación.[3][4]
+El proyecto está pensado para inspeccionar código fuente de forma rápida sin depender de la ejecución del sistema objetivo. La herramienta usa patrones de archivos, estructura del proyecto y análisis estático de contenido para inferir tecnologías y riesgos comunes; este tipo de fingerprinting tecnológico es una práctica habitual para clasificar frameworks y componentes de una aplicación.
 
 ## Funcionalidades
 
 - Conteo de archivos por extensión, respetando `.gitignore` cuando el directorio es un repositorio Git.
 - Detección de proyectos PHP y clasificación entre PHP puro o framework PHP.
-- Detección de Laravel y CodeIgniter mediante estructura de carpetas, archivos característicos y, cuando existe, `composer.json`.[5][6][7]
-- Detección de Kendo UI basada en evidencias fuertes como assets, namespace e inicializaciones específicas, evitando falsos positivos por atributos genéricos como `data-role`, que también son usados por jQuery Mobile.[8][9][10]
-- Detección de dependencias externas al proyecto, como `include` absolutos, extensiones PHP declaradas y uso real de comandos del sistema.[11][12]
-- Detección de aliases y funciones OCI8 obsoletas o deprecadas, como `ociparse`, `ocilogon` y `ocifetchinto`.[13][2]
+- Detección de Laravel y CodeIgniter mediante estructura de carpetas, archivos característicos y, cuando existe, `composer.json`.
+- Detección de Kendo UI basada en evidencias fuertes como assets, namespace e inicializaciones específicas, evitando falsos positivos por atributos genéricos como `data-role`, que también son usados por jQuery Mobile.
+- Detección de dependencias externas al proyecto, como `include` absolutos, extensiones PHP declaradas y uso real de comandos del sistema.
+- Detección de aliases y funciones OCI8 obsoletas o deprecadas, como `ociparse`, `ocilogon` y `ocifetchinto`.
 
 ## Estructura del proyecto
 
@@ -49,9 +49,9 @@ inspector/
 
 ## Requisitos
 
-- Python 3.9 o superior para una base compatible con servidores Linux comunes; si se usan anotaciones modernas como `X | None`, eso requiere Python 3.10+, por lo que para compatibilidad amplia conviene mantener `Optional[...]` y tipos de `typing` clásicos.[14][15]
+- Python 3.9 o superior para una base compatible con servidores Linux comunes; si se usan anotaciones modernas como `X | None`, eso requiere Python 3.10+, por lo que para compatibilidad amplia conviene mantener `Optional[...]` y tipos de `typing` clásicos.
 - Acceso de lectura al directorio del proyecto a inspeccionar.
-- Git instalado si se quiere respetar `.gitignore` usando `git ls-files`; en ausencia de Git, la herramienta puede caer a un recorrido recursivo convencional del árbol de archivos.[11]
+- Git instalado si se quiere respetar `.gitignore` usando `git ls-files`; en ausencia de Git, la herramienta puede caer a un recorrido recursivo convencional del árbol de archivos.
 
 ## Instalación
 
@@ -71,28 +71,28 @@ Si el sistema no expone el comando `python`, es normal usar `python3`; en sistem
 Este comando ejecuta el flujo completo: contador de archivos + detectores.
 
 ```bash
-python3 -m inspector.cli soladmin
+python3 -m inspector.cli proyecto
 ```
 
 ### Solo contador
 
 ```bash
-python3 -m inspector.cli count soladmin
+python3 -m inspector.cli count proyecto
 ```
 
 ### Solo inspección
 
 ```bash
-python3 -m inspector.cli inspect soladmin
+python3 -m inspector.cli inspect proyecto
 ```
 
 ### Salida JSON
 
 ```bash
-python3 -m inspector.cli soladmin --json
+python3 -m inspector.cli proyecto --json
 ```
 
-El uso de subcomandos en `argparse` es una forma estándar de construir CLIs extensibles, y también permite mantener un modo por defecto para el análisis completo cuando no se especifica subcomando.[18][19]
+El uso de subcomandos en `argparse` es una forma estándar de construir CLIs extensibles, y también permite mantener un modo por defecto para el análisis completo cuando no se especifica subcomando.
 
 ## Qué detecta
 
@@ -104,13 +104,13 @@ Cuenta archivos válidos por extensión considerando extensiones simples y compu
 
 La herramienta busca señales típicas de frameworks PHP:
 
-- Laravel: `artisan`, `bootstrap/app.php`, `routes/`, dependencia `laravel/framework` y versión en `composer.lock` o archivos internos del framework.[5][20]
-- CodeIgniter 3: `application/config/config.php`, `system/core/CodeIgniter.php` y estructura clásica del framework.[7][21]
-- CodeIgniter 4: `spark`, `app/Config`, `codeigniter4/framework` y estructura moderna del framework.[6][22]
+- Laravel: `artisan`, `bootstrap/app.php`, `routes/`, dependencia `laravel/framework` y versión en `composer.lock` o archivos internos del framework.
+- CodeIgniter 3: `application/config/config.php`, `system/core/CodeIgniter.php` y estructura clásica del framework.
+- CodeIgniter 4: `spark`, `app/Config`, `codeigniter4/framework` y estructura moderna del framework.
 
 ### 3. PHP puro
 
-Inspector distingue entre “usa PHP” y “es PHP puro”. Si se detecta un framework PHP, el proyecto no debe clasificarse como PHP puro, aunque obviamente siga siendo un proyecto escrito en PHP.[1][23]
+Inspector distingue entre “usa PHP” y “es PHP puro”. Si se detecta un framework PHP, el proyecto no debe clasificarse como PHP puro, aunque obviamente siga siendo un proyecto escrito en PHP.
 
 ### 4. Kendo UI
 
@@ -121,27 +121,27 @@ La detección de Kendo se basa en señales fuertes como:
 - llamadas como `kendoGrid()`.
 - namespace `kendo.ui`.
 
-No conviene usar `data-role="..."` como evidencia suficiente, porque jQuery Mobile también basa su marcado en `data-role`, lo que genera falsos positivos.[8][10][9]
+No conviene usar `data-role="..."` como evidencia suficiente, porque jQuery Mobile también basa su marcado en `data-role`, lo que genera falsos positivos.
 
 ### 5. Dependencias del servidor
 
 Se reportan como dependencias relevantes:
 
-- `include` o `require` con rutas absolutas fuera del proyecto.[12][24]
-- extensiones PHP declaradas en Composer como `ext-*`.[11]
+- `include` o `require` con rutas absolutas fuera del proyecto.
+- extensiones PHP declaradas en Composer como `ext-*`.
 - uso real de comandos del sistema mediante `exec`, `system`, `shell_exec` o similares.
 
-Esto permite distinguir entre librerías realmente externas al proyecto y coincidencias accidentales en texto o comentarios.[12][25]
+Esto permite distinguir entre librerías realmente externas al proyecto y coincidencias accidentales en texto o comentarios.
 
 ### 6. OCI obsoleto
 
-Se detectan aliases antiguos de OCI8, como `ociparse`, `ociexecute`, `ocilogon` y `ocifetchinto`. El manual de PHP documenta estos aliases obsoletos y recomienda migrar a funciones `oci_*` modernas o a variantes nuevas de fetch según el caso.[13][2]
+Se detectan aliases antiguos de OCI8, como `ociparse`, `ociexecute`, `ocilogon` y `ocifetchinto`. El manual de PHP documenta estos aliases obsoletos y recomienda migrar a funciones `oci_*` modernas o a variantes nuevas de fetch según el caso.
 
 ## Ejemplo de salida
 
 ```text
 ================================================================
-Proyecto           : /var/www/html/private/apps/soladmin
+Proyecto           : /var/www/html/private/apps/proyecto
 Archivos analizados: 1243
 ================================================================
 
@@ -165,14 +165,14 @@ Datos:
 
 ## Diseño y criterios
 
-El diseño del proyecto favorece separación de responsabilidades: cada detector resuelve un problema acotado y el orquestador compone el resultado final. Este enfoque facilita mantener reglas específicas, reducir falsos positivos y agregar nuevos detectores sin romper el resto del sistema.[26]
+El diseño del proyecto favorece separación de responsabilidades: cada detector resuelve un problema acotado y el orquestador compone el resultado final. Este enfoque facilita mantener reglas específicas, reducir falsos positivos y agregar nuevos detectores sin romper el resto del sistema.
 
 Algunas decisiones importantes del proyecto:
 
 - Evitar que “usa PHP” se interprete como “PHP puro”.
-- Exigir evidencias fuertes para detectar Kendo, para no confundirlo con jQuery Mobile.[10][8]
-- Separar dependencias externas del proyecto, extensiones PHP y binarios del sistema para reducir ruido.[11][12]
-- Mantener compatibilidad con Python 3.9 para facilitar despliegue en servidores legacy.[15][14]
+- Exigir evidencias fuertes para detectar Kendo, para no confundirlo con jQuery Mobile.
+- Separar dependencias externas del proyecto, extensiones PHP y binarios del sistema para reducir ruido.
+- Mantener compatibilidad con Python 3.9 para facilitar despliegue en servidores legacy.
 
 ## Posibles mejoras
 
@@ -180,8 +180,8 @@ Algunas decisiones importantes del proyecto:
 - Detectar stack frontend adicional, como Bootstrap, Vue, React, jQuery o DataTables.
 - Añadir exportación a CSV o Markdown.
 - Añadir exclusión configurable de carpetas como `vendor`, `node_modules`, `demo`, `examples` o `tests` para reducir falsos positivos.
-- Agregar severidad por hallazgo y recomendaciones automáticas de migración para OCI legacy o dependencias externas críticas.[2][3]
+- Agregar severidad por hallazgo y recomendaciones automáticas de migración para OCI legacy o dependencias externas críticas.
 
 ## Licencia y uso interno
 
-Este proyecto está orientado a análisis interno, auditoría técnica y documentación de aplicaciones existentes. También puede servir como apoyo en procesos de modernización, inventario tecnológico o estimación de deuda técnica.[4][3]
+Este proyecto está orientado a análisis interno, auditoría técnica y documentación de aplicaciones existentes. También puede servir como apoyo en procesos de modernización, inventario tecnológico o estimación de deuda técnica.
