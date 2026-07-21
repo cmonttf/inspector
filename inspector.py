@@ -12,11 +12,47 @@ from inspector.detectors import (
 from inspector.utils import obtener_archivos
 
 
-def inspeccionar_proyecto(directorio: Path) -> dict:
-    archivos = obtener_archivos(directorio)
+def _resolver_directorio_inspeccion(directorio: Path) -> Path:
+    if not directorio.exists() or not directorio.is_dir():
+        return directorio
 
-    framework = detectar_framework_php(directorio, archivos)
-    php = detectar_php_puro(directorio, archivos)
+    candidatos = [directorio]
+    for subdir in sorted(directorio.iterdir(), key=lambda p: p.name):
+        if subdir.is_dir() and (subdir / "composer.json").exists():
+            candidatos.append(subdir)
+
+    for candidato in candidatos:
+        composer_json = candidato / "composer.json"
+        if composer_json.exists():
+            try:
+                import json
+                composer = json.loads(composer_json.read_text(encoding="utf-8"))
+            except Exception:
+                composer = {}
+            if isinstance(composer, dict):
+                name = composer.get("name")
+                if isinstance(name, str) and name in {"codeigniter/framework", "codeigniter4/framework"}:
+                    return candidato
+
+    for candidato in candidatos:
+        if (candidato / "application" / "config" / "config.php").exists():
+            return candidato
+        if (candidato / "system" / "core" / "CodeIgniter.php").exists():
+            return candidato
+        if (candidato / "public" / "application" / "config" / "config.php").exists():
+            return candidato
+        if (candidato / "public" / "system" / "core" / "CodeIgniter.php").exists():
+            return candidato
+
+    return directorio
+
+
+def inspeccionar_proyecto(directorio: Path) -> dict:
+    directorio_inspeccion = _resolver_directorio_inspeccion(directorio)
+    archivos = obtener_archivos(directorio_inspeccion)
+
+    framework = detectar_framework_php(directorio_inspeccion, archivos)
+    php = detectar_php_puro(directorio_inspeccion, archivos)
 
     framework_name = framework.datos.get("framework")
     usa_php = php.datos.get("usa_php", False)

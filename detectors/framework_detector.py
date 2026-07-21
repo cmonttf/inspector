@@ -56,7 +56,11 @@ def extraer_version_codeigniter(directorio: Path) -> str | None:
 def detectar_framework_php(directorio: Path, archivos: list[Path]) -> DetectionResult:
     composer_json = directorio / "composer.json"
     composer = leer_json(composer_json) if composer_json.exists() else {}
-    require = (composer or {}).get("require", {}) if isinstance(composer, dict) else {}
+    if not isinstance(composer, dict):
+        composer = {}
+
+    require = composer.get("require", {}) if isinstance(composer.get("require"), dict) else {}
+    composer_name = composer.get("name")
 
     score = {
         "laravel": 0,
@@ -78,6 +82,19 @@ def detectar_framework_php(directorio: Path, archivos: list[Path]) -> DetectionR
         datos["version_requerida"] = require["laravel/framework"]
         evidencias.append(Evidence("framework", "composer.json", "require laravel/framework"))
 
+    if composer_name == "codeigniter/framework":
+        score["codeigniter3"] += 5
+        evidencias.append(Evidence("framework", "composer.json", "name codeigniter/framework"))
+
+    if composer_name == "codeigniter4/framework":
+        score["codeigniter4"] += 5
+        evidencias.append(Evidence("framework", "composer.json", "name codeigniter4/framework"))
+
+    if "codeigniter4/framework" in require:
+        score["codeigniter4"] += 5
+        datos["version_requerida"] = require["codeigniter4/framework"]
+        evidencias.append(Evidence("framework", "composer.json", "require codeigniter4/framework"))
+
     if (directorio / "artisan").exists():
         score["laravel"] += 5
         evidencias.append(Evidence("archivo", "artisan", "archivo artisan encontrado"))
@@ -89,11 +106,6 @@ def detectar_framework_php(directorio: Path, archivos: list[Path]) -> DetectionR
     if (directorio / "routes").exists():
         score["laravel"] += 1
         evidencias.append(Evidence("directorio", "routes", "directorio routes encontrado"))
-
-    if "codeigniter4/framework" in require:
-        score["codeigniter4"] += 5
-        datos["version_requerida"] = require["codeigniter4/framework"]
-        evidencias.append(Evidence("framework", "composer.json", "require codeigniter4/framework"))
 
     if (directorio / "spark").exists():
         score["codeigniter4"] += 5
@@ -133,102 +145,6 @@ def detectar_framework_php(directorio: Path, archivos: list[Path]) -> DetectionR
 
     datos["framework_detectado"] = True
     datos["php_puro"] = False
-
-    if mejor == "laravel":
-        datos["framework"] = "laravel"
-        datos["version_instalada"] = (
-            extraer_version_laravel_desde_lock(directorio)
-            or extraer_version_laravel_desde_vendor(directorio)
-        )
-    elif mejor == "codeigniter3":
-        datos["framework"] = "codeigniter3"
-        datos["version_instalada"] = extraer_version_codeigniter(directorio)
-    elif mejor == "codeigniter4":
-        datos["framework"] = "codeigniter4"
-        datos["version_instalada"] = extraer_version_codeigniter(directorio)
-
-    confianza = "alta" if score[mejor] >= 5 else "media"
-
-    return DetectionResult(
-        nombre="framework_php",
-        detectado=True,
-        confianza=confianza,
-        datos=datos,
-        evidencias=evidencias,
-    )
-    composer_json = directorio / "composer.json"
-    composer = leer_json(composer_json) if composer_json.exists() else {}
-    require = (composer or {}).get("require", {}) if isinstance(composer, dict) else {}
-
-    score = {
-        "laravel": 0,
-        "codeigniter3": 0,
-        "codeigniter4": 0,
-    }
-    evidencias: list[Evidence] = []
-    datos: dict = {
-        "framework": None,
-        "version_requerida": None,
-        "version_instalada": None,
-        "score": score.copy(),
-    }
-
-    if "laravel/framework" in require:
-        score["laravel"] += 5
-        datos["version_requerida"] = require["laravel/framework"]
-        evidencias.append(Evidence("framework", "composer.json", "require laravel/framework"))
-
-    if (directorio / "artisan").exists():
-        score["laravel"] += 5
-        evidencias.append(Evidence("archivo", "artisan", "archivo artisan encontrado"))
-
-    if (directorio / "bootstrap/app.php").exists():
-        score["laravel"] += 2
-        evidencias.append(Evidence("archivo", "bootstrap/app.php", "bootstrap de Laravel encontrado"))
-
-    if (directorio / "routes").exists():
-        score["laravel"] += 1
-        evidencias.append(Evidence("directorio", "routes", "directorio routes encontrado"))
-
-    if "codeigniter4/framework" in require:
-        score["codeigniter4"] += 5
-        datos["version_requerida"] = require["codeigniter4/framework"]
-        evidencias.append(Evidence("framework", "composer.json", "require codeigniter4/framework"))
-
-    if (directorio / "spark").exists():
-        score["codeigniter4"] += 5
-        evidencias.append(Evidence("archivo", "spark", "archivo spark encontrado"))
-
-    if (directorio / "app/Config").exists():
-        score["codeigniter4"] += 2
-        evidencias.append(Evidence("directorio", "app/Config", "estructura de CI4 encontrada"))
-
-    ci3_core = directorio / "system/core/CodeIgniter.php"
-    if ci3_core.exists():
-        score["codeigniter3"] += 5
-        evidencias.append(Evidence("archivo", "system/core/CodeIgniter.php", "núcleo de CI3 encontrado"))
-
-    if (directorio / "application/config/config.php").exists():
-        score["codeigniter3"] += 3
-        evidencias.append(Evidence("archivo", "application/config/config.php", "estructura de CI3 encontrada"))
-
-    datos["score"] = score.copy()
-    mejor = max(score, key=score.get)
-
-    hay_php = any(
-        a.suffix.lower() == ".php" or a.name.lower().endswith(".blade.php")
-        for a in archivos
-    )
-
-    if score[mejor] == 0:
-        datos["framework"] = "php_puro" if hay_php else None
-        return DetectionResult(
-            nombre="framework_php",
-            detectado=hay_php,
-            confianza="media" if hay_php else "baja",
-            datos=datos,
-            evidencias=evidencias,
-        )
 
     if mejor == "laravel":
         datos["framework"] = "laravel"
